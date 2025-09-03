@@ -1,15 +1,26 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useState, useEffect } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
+import { useAuth } from '../../context/AuthContext';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function SignInPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const { firebaseUser, loading: authLoading } = useAuth();
+    const router = useRouter();
+
+    // Redirect if already signed in
+    useEffect(() => {
+        if (!authLoading && firebaseUser) {
+            router.push('/dashboard');
+        }
+    }, [firebaseUser, authLoading, router]);
 
     async function onSubmit(e: FormEvent) {
         e.preventDefault();
@@ -17,8 +28,10 @@ export default function SignInPage() {
         setLoading(true);
         try {
             await signInWithEmailAndPassword(auth, email, password);
-        } catch (err: any) {
-            setError(err.message ?? 'Failed to sign in');
+            // Redirect will happen automatically via useEffect
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to sign in';
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }

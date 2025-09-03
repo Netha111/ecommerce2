@@ -1,19 +1,29 @@
 import { getApp, getApps, initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-    apiKey: "AIzaSyB-5xSjL1ptNfHVuFL5YcGqiXBmJ-U7iM4",
-    authDomain: "ecommerce-5175a.firebaseapp.com",
-    projectId: "ecommerce-5175a",
-    storageBucket: "ecommerce-5175a.firebasestorage.app",
-    messagingSenderId: "1049383381276",
-    appId: "1:1049383381276:web:9b5e56eb4c0d2b5a5b72d9",
-    measurementId: "G-XCK4DBS5W6"
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ,
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ,
+    measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID 
 };
+
+// Debug: Log Firebase config in development
+if (process.env.NODE_ENV === 'development') {
+    console.log('Firebase Config:', {
+        ...firebaseConfig,
+        apiKey: firebaseConfig.apiKey ? `${firebaseConfig.apiKey.substring(0, 10)}...` : 'Missing'
+    });
+}
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
 export default app;

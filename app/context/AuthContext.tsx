@@ -6,13 +6,41 @@ import { auth, db } from '../lib/firebase';
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 
 export type AppUser = {
+    // Basic Info
     uid: string;
     email: string | null;
     name: string | null;
     photoURL: string | null;
+    
+    // Credits & Plan
     credits: number;
-    createdAt?: unknown;
-    plan?: 'free' | 'pro' | 'enterprise';
+    plan: 'free' | 'starter' | 'professional' | 'enterprise';
+    subscriptionId: string | null;
+    subscriptionStatus: 'active' | 'canceled' | 'past_due' | null;
+    
+    // Usage Tracking
+    totalTransformations: number;
+    totalCreditsUsed: number;
+    lastTransformationAt: unknown | null;
+    
+    // Timestamps
+    createdAt: unknown;
+    updatedAt: unknown;
+    lastLoginAt: unknown | null;
+    
+    // Settings
+    emailNotifications: boolean;
+    planAutoRenew: boolean;
+    
+    // Billing
+    billingAddress: {
+        name: string | null;
+        address: string | null;
+        city: string | null;
+        state: string | null;
+        country: string | null;
+        pincode: string | null;
+    } | null;
 };
 
 type AuthContextValue = {
@@ -43,13 +71,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const snap = await getDoc(ref);
             if (!snap.exists()) {
                 const newUser: AppUser = {
+                    // Basic Info
                     uid: user.uid,
                     email: user.email,
                     name: user.displayName ?? null,
                     photoURL: user.photoURL ?? null,
+                    
+                    // Credits & Plan
                     credits: 3,
-                    createdAt: serverTimestamp(),
                     plan: 'free',
+                    subscriptionId: null,
+                    subscriptionStatus: null,
+                    
+                    // Usage Tracking
+                    totalTransformations: 0,
+                    totalCreditsUsed: 0,
+                    lastTransformationAt: null,
+                    
+                    // Timestamps
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                    lastLoginAt: serverTimestamp(),
+                    
+                    // Settings
+                    emailNotifications: true,
+                    planAutoRenew: true,
+                    
+                    // Billing
+                    billingAddress: null,
                 };
                 await setDoc(ref, newUser);
                 setAppUser(newUser);
@@ -59,6 +108,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const updates: Partial<AppUser> = {};
                 if (data.credits === undefined) updates.credits = 3;
                 if (!data.email && user.email) updates.email = user.email;
+                if (!data.plan) updates.plan = 'free';
+                if (data.totalTransformations === undefined) updates.totalTransformations = 0;
+                if (data.totalCreditsUsed === undefined) updates.totalCreditsUsed = 0;
+                if (data.emailNotifications === undefined) updates.emailNotifications = true;
+                if (data.planAutoRenew === undefined) updates.planAutoRenew = true;
+                if (!data.updatedAt) updates.updatedAt = serverTimestamp();
+                updates.lastLoginAt = serverTimestamp();
+                
                 if (Object.keys(updates).length > 0) await updateDoc(ref, updates);
                 setAppUser({ ...data, ...updates });
             }

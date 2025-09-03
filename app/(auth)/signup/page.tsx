@@ -1,9 +1,11 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useState, useEffect } from 'react';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
+import { useAuth } from '../../context/AuthContext';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function SignUpPage() {
     const [name, setName] = useState('');
@@ -11,6 +13,15 @@ export default function SignUpPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const { firebaseUser, loading: authLoading } = useAuth();
+    const router = useRouter();
+
+    // Redirect if already signed in
+    useEffect(() => {
+        if (!authLoading && firebaseUser) {
+            router.push('/dashboard');
+        }
+    }, [firebaseUser, authLoading, router]);
 
     async function onSubmit(e: FormEvent) {
         e.preventDefault();
@@ -19,8 +30,10 @@ export default function SignUpPage() {
         try {
             const cred = await createUserWithEmailAndPassword(auth, email, password);
             if (name) await updateProfile(cred.user, { displayName: name });
-        } catch (err: any) {
-            setError(err.message ?? 'Failed to sign up');
+            // Redirect will happen automatically via useEffect
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to sign up';
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }

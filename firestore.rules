@@ -1,0 +1,58 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Users collection - users can only read/write their own document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Transformations collection - users can only access their own transformations
+    match /transformations/{transformationId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Payments collection - users can only read their own payments
+    match /payments/{paymentId} {
+      allow read: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+      // Only allow updates from server (admin)
+      allow update: if false;
+    }
+    
+    // Subscriptions collection - users can only read their own subscriptions
+    match /subscriptions/{subscriptionId} {
+      allow read: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+      // Only allow updates from server (admin)
+      allow update: if false;
+    }
+    
+    // Usage analytics - users can only read their own analytics
+    match /usage_analytics/{analyticsId} {
+      allow read: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      // Only allow create/update from server (admin)
+      allow create, update: if false;
+    }
+    
+    // System settings - read-only for authenticated users
+    match /system_settings/app_config {
+      allow read: if request.auth != null;
+      // Only allow updates from server (admin)
+      allow write: if false;
+    }
+    
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

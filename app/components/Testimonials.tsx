@@ -50,9 +50,9 @@ export default function Testimonials() {
                     <h2 className="font-inter font-bold text-3xl md:text-4xl lg:text-5xl text-[#2D3748] mb-6">
                         What Our Customers Say
                     </h2>
-                    <p className="font-inter text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-                        Don't just take our word for it. Here's what e-commerce leaders are saying about StyleForge AI.
-                    </p>
+                                            <p className="font-inter text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                            Don&apos;t just take our word for it. Here&apos;s what e-commerce leaders are saying about StyleForge AI.
+                        </p>
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
@@ -75,7 +75,7 @@ export default function Testimonials() {
 
                                 {/* Quote */}
                                 <blockquote className="text-gray-700 mb-6 italic leading-relaxed">
-                                    "{testimonial.quote}"
+                                    &ldquo;{testimonial.quote}&rdquo;
                                 </blockquote>
 
                                 {/* Star Rating */}
