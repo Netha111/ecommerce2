@@ -1,13 +1,18 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import ImageUpload from '../components/dashboard/ImageUpload';
+import TransformationResults from '../components/dashboard/TransformationResults';
+import { TransformationStyleKey } from '../types';
 
 export default function DashboardPage() {
     const { firebaseUser, appUser, loading, signOutAsync } = useAuth();
     const router = useRouter();
+    const [currentJobId, setCurrentJobId] = useState<string | null>(null);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     // Redirect to signin if not authenticated
     useEffect(() => {
@@ -15,6 +20,47 @@ export default function DashboardPage() {
             router.push('/signin');
         }
     }, [firebaseUser, loading, router]);
+
+    const handleImageUpload = async (file: File, style: TransformationStyleKey) => {
+        if (!appUser) return;
+
+        setIsProcessing(true);
+        setCurrentJobId(null);
+
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('userId', appUser.uid);
+            formData.append('style', style);
+
+            // Use mock API for testing when fal.ai credits are exhausted
+            // Change back to '/api/transform' when you have fal.ai credits
+            const response = await fetch('/api/transform-mock', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setCurrentJobId(data.jobId);
+            } else {
+                alert(data.error || 'Failed to start transformation');
+                setIsProcessing(false);
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert('Failed to upload image');
+            setIsProcessing(false);
+        }
+    };
+
+    const handleTransformationComplete = () => {
+        setIsProcessing(false);
+        // Don't refresh the page - this breaks the results display
+        // Instead, we'll update the user data in context
+        console.log('Transformation completed successfully');
+    };
 
     // Show loading state
     if (loading) {
@@ -56,6 +102,12 @@ export default function DashboardPage() {
                         </div>
                         
                         <div className="flex items-center space-x-4">
+                            <Link 
+                                href="/dashboard/gallery"
+                                className="text-gray-600 hover:text-gray-900 font-medium"
+                            >
+                                Gallery
+                            </Link>
                             <span className="text-gray-700">
                                 Welcome, {appUser?.name || appUser?.email || 'User'}!
                             </span>
@@ -122,19 +174,26 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                {/* Quick Actions */}
-                <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-6">Quick Actions</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#0F3DFF] transition-colors cursor-pointer">
-                            <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">Upload Images</h3>
-                            <p className="text-gray-600">Transform your product photos with AI</p>
-                            <p className="text-sm text-gray-500 mt-2">Coming soon in Phase 2</p>
-                        </div>
+                {/* Image Upload */}
+                <ImageUpload
+                    onUpload={handleImageUpload}
+                    isProcessing={isProcessing}
+                    userCredits={appUser?.credits || 0}
+                />
 
+                {/* Transformation Results */}
+                <TransformationResults
+                    jobId={currentJobId}
+                    onComplete={handleTransformationComplete}
+                />
+
+                {/* Buy Credits Section */}
+                {appUser?.credits === 0 && (
+                    <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200 mt-8">
+                        <h2 className="text-xl font-semibold text-gray-900 mb-4">Need More Credits?</h2>
+                        <p className="text-gray-600 mb-6">
+                            You've used all your free credits. Purchase more to continue transforming images.
+                        </p>
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#FF6B35] transition-colors cursor-pointer">
                             <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -144,7 +203,7 @@ export default function DashboardPage() {
                             <p className="text-sm text-gray-500 mt-2">Coming soon in Phase 3</p>
                         </div>
                     </div>
-                </div>
+                )}
 
                 {/* User Info (for testing) */}
                 <div className="mt-8 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
