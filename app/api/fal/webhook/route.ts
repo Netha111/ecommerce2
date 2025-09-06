@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
 
                 // Deduct credits and update user stats
                 if (userId) {
-                    await deductCredits(userId, 1);
+                    await deductCredits(userId, 1); // 1 credit for 1 image
                     await updateTransformationStats(userId);
                 }
             }

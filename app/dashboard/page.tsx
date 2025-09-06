@@ -33,9 +33,9 @@ export default function DashboardPage() {
             formData.append('userId', appUser.uid);
             formData.append('style', style);
 
-            // Use mock API for testing when fal.ai credits are exhausted
-            // Change back to '/api/transform' when you have fal.ai credits
-            const response = await fetch('/api/transform-mock', {
+            // Using real fal.ai API now that credits are available
+            // Switch back to '/api/transform-mock' if you need to test without credits
+            const response = await fetch('/api/transform', {
                 method: 'POST',
                 body: formData,
             });

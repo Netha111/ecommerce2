@@ -12,6 +12,7 @@ export default function TransformationResults({ jobId, onComplete }: Transformat
     const [jobStatus, setJobStatus] = useState<JobStatus | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [imageLoadingStates, setImageLoadingStates] = useState<{ [key: number]: boolean }>({});
 
     useEffect(() => {
         if (!jobId) {
@@ -60,14 +61,44 @@ export default function TransformationResults({ jobId, onComplete }: Transformat
 
     if (!jobId) return null;
 
-    const downloadImage = (url: string, filename: string) => {
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    const downloadImage = async (url: string, filename: string) => {
+        try {
+            console.log('Starting download for:', url);
+            
+            // Use our proxy to fetch the image (to handle CORS)
+            const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(url)}`;
+            const response = await fetch(proxyUrl);
+            
+            if (!response.ok) {
+                throw new Error(`Failed to fetch image: ${response.status}`);
+            }
+            
+            const blob = await response.blob();
+            console.log('Image blob created:', blob.type, blob.size);
+            
+            // Create blob URL and download
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = filename;
+            link.style.display = 'none';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up blob URL
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+            
+            console.log('Download initiated successfully');
+            
+        } catch (error) {
+            console.error('Download failed:', error);
+            console.log('Falling back to opening in new tab');
+            
+            // Fallback: open direct URL in new tab
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
     };
 
     return (
@@ -108,23 +139,86 @@ export default function TransformationResults({ jobId, onComplete }: Transformat
                 </div>
             )}
 
-            {jobStatus?.status === 'SUCCEEDED' && jobStatus.images && (
+            {jobStatus?.status === 'SUCCEEDED' && jobStatus.images && jobStatus.images.length > 0 && (
                 <div>
                     <div className="flex items-center justify-between mb-6">
                         <p className="text-green-600 font-medium">✓ Transformation completed successfully!</p>
                         <span className="text-sm text-gray-500">
-                            {jobStatus.images.length} variations generated
+                            {jobStatus.images.length} {jobStatus.images.length === 1 ? 'variation' : 'variations'} generated
                         </span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className={`grid gap-6 ${jobStatus.images.length === 1 ? 'grid-cols-1 max-w-md mx-auto' : 'grid-cols-1 md:grid-cols-3'}`}>
                         {jobStatus.images.map((image, index) => (
                             <div key={index} className="group relative">
-                                <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
+                                <div className="bg-gray-100 rounded-lg overflow-hidden relative" style={{ minHeight: '300px' }}>
+                                    {/* Loading state */}
+                                    {imageLoadingStates[index] === true && (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
+                                            <div className="text-center">
+                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F3DFF] mx-auto mb-2"></div>
+                                                <p className="text-sm text-gray-600">Loading image...</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    
+                                    {/* Primary image display via proxy */}
                                     <img
-                                        src={image.url}
+                                        src={`/api/image-proxy?url=${encodeURIComponent(image.url)}`}
                                         alt={`Transformation ${index + 1}`}
-                                        className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                                        className="w-full h-auto object-contain transition-transform group-hover:scale-105"
+                                        loading="eager"
+                                        onLoadStart={() => {
+                                            console.log('Image load started via proxy:', image.url);
+                                            setImageLoadingStates(prev => ({ ...prev, [index]: true }));
+                                        }}
+                                        onError={(e) => {
+                                            console.error('Proxied image failed to load:', image.url, e);
+                                            console.error('Trying direct URL as fallback...');
+                                            
+                                            // Fallback to direct URL
+                                            const img = e.currentTarget as HTMLImageElement;
+                                            img.src = image.url;
+                                            img.crossOrigin = 'anonymous';
+                                            
+                                            // If direct URL also fails, show error
+                                            img.onerror = () => {
+                                                console.error('Direct URL also failed:', image.url);
+                                                setImageLoadingStates(prev => ({ ...prev, [index]: false }));
+                                                img.style.display = 'none';
+                                                
+                                                // Show error message
+                                                const errorDiv = document.createElement('div');
+                                                errorDiv.className = 'flex items-center justify-center h-full text-red-500 bg-red-50 rounded';
+                                                errorDiv.style.minHeight = '300px';
+                                                errorDiv.innerHTML = `
+                                                    <div class="text-center p-4">
+                                                        <p class="font-medium">Failed to load image</p>
+                                                        <p class="text-sm mt-2">Click "View Full" to open in new tab</p>
+                                                        <button 
+                                                            onclick="window.open('${image.url}', '_blank')"
+                                                            class="mt-2 px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600"
+                                                        >
+                                                            Open Direct URL
+                                                        </button>
+                                                    </div>
+                                                `;
+                                                img.parentNode?.appendChild(errorDiv);
+                                            };
+                                        }}
+                                        onLoad={(e) => {
+                                            console.log('Image loaded successfully via proxy:', image.url);
+                                            const img = e.currentTarget as HTMLImageElement;
+                                            console.log('Image dimensions:', img.naturalWidth, 'x', img.naturalHeight);
+                                            console.log('Image complete:', img.complete);
+                                            setImageLoadingStates(prev => ({ ...prev, [index]: false }));
+                                        }}
+                                        style={{ 
+                                            backgroundColor: 'white',
+                                            minHeight: '300px',
+                                            maxWidth: '100%',
+                                            display: 'block'
+                                        }}
                                     />
                                 </div>
                                 
@@ -159,8 +253,8 @@ export default function TransformationResults({ jobId, onComplete }: Transformat
                         <button
                             onClick={() => {
                                 jobStatus.images?.forEach((image, index) => {
-                                    setTimeout(() => {
-                                        downloadImage(image.url, `transformation-${index + 1}.png`);
+                                    setTimeout(async () => {
+                                        await downloadImage(image.url, `transformation-${index + 1}.png`);
                                     }, index * 500);
                                 });
                             }}
@@ -175,9 +269,52 @@ export default function TransformationResults({ jobId, onComplete }: Transformat
             {/* Debug info in development */}
             {process.env.NODE_ENV === 'development' && jobStatus && (
                 <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                    <p className="text-xs text-gray-600 font-mono">
+                    <p className="text-xs text-gray-600 font-mono mb-2">
                         Debug: Job ID: {jobId} | Status: {jobStatus.status} | Request ID: {jobStatus.requestId}
                     </p>
+                    <p className="text-xs text-gray-600 font-mono mb-2">
+                        Images Count: {jobStatus.images?.length || 0}
+                    </p>
+                    {jobStatus.images && jobStatus.images.length > 0 && (
+                        <div className="text-xs text-gray-600 font-mono">
+                            <p>Image URLs:</p>
+                            {jobStatus.images.map((img, idx) => (
+                                <div key={idx} className="mb-2 p-2 bg-white rounded border">
+                                    <p className="font-semibold">Image {idx + 1}:</p>
+                                    <p className="text-xs text-gray-600 mb-1">Original URL:</p>
+                                    <p className="break-all text-blue-600 text-xs mb-2">{img.url}</p>
+                                    <p className="text-xs text-gray-600 mb-1">Proxied URL:</p>
+                                    <p className="break-all text-green-600 text-xs mb-2">/api/image-proxy?url={encodeURIComponent(img.url)}</p>
+                                    <p>Loading State: {imageLoadingStates[idx] === true ? 'Loading...' : imageLoadingStates[idx] === false ? 'Loaded/Error' : 'Not started'}</p>
+                                    {img.width && img.height && (
+                                        <p>Dimensions: {img.width} x {img.height}</p>
+                                    )}
+                                    <div className="flex gap-2 mt-2">
+                                        <button 
+                                            onClick={() => window.open(img.url, '_blank')}
+                                            className="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+                                        >
+                                            Test Original
+                                        </button>
+                                        <button 
+                                            onClick={() => window.open(`/api/image-proxy?url=${encodeURIComponent(img.url)}`, '_blank')}
+                                            className="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600"
+                                        >
+                                            Test Proxy
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    {jobStatus.transformation && (
+                        <details className="mt-2">
+                            <summary className="text-xs text-gray-600 cursor-pointer">Full Response Data</summary>
+                            <pre className="text-xs text-gray-600 mt-2 overflow-auto max-h-40">
+                                {JSON.stringify(jobStatus, null, 2)}
+                            </pre>
+                        </details>
+                    )}
                 </div>
             )}
         </div>

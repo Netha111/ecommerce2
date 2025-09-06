@@ -6,10 +6,10 @@ if (!process.env.FAL_KEY) {
 
 // Debug: Log FAL_KEY status in development
 if (process.env.NODE_ENV === 'development') {
-    console.log('FAL_KEY Status:', {
+    console.log('🔑 FAL_KEY Status:', {
         exists: !!process.env.FAL_KEY,
         length: process.env.FAL_KEY?.length || 0,
-        prefix: process.env.FAL_KEY ? `${process.env.FAL_KEY.substring(0, 10)}...` : 'Missing'
+        prefix: process.env.FAL_KEY ? `${process.env.FAL_KEY.substring(0, 15)}...` : 'Missing'
     });
 }
 

@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
 
         const userData = userSnap.data();
         const userCredits = userData.credits || 0;
-        const requiredCredits = 1; // Each transformation costs 1 credit
+        const requiredCredits = 1; // Each transformation costs 1 credit (single image for testing)
 
         if (!await hasEnoughCredits(userCredits, requiredCredits)) {
             return NextResponse.json({ 
@@ -87,15 +87,16 @@ export async function POST(req: NextRequest) {
             num_images: 3
         });
 
-        // Let's try with a known working model first - FLUX.1 [dev]
-        // This is a popular model that should definitely work
-        const { request_id } = await fal.queue.submit("fal-ai/flux/dev", {
+        // Use NanoBanana edit model as specified in the setup guide
+        console.log('🎨 Submitting to fal with image URL:', imageUrl);
+        const { request_id } = await fal.queue.submit("fal-ai/nano-banana/edit", {
             input: {
-                prompt: `${transformationStyle.prompt}, high quality product photography`,
-                num_images: 1, // Start with 1 image to test
-                image_size: "square",
+                prompt: transformationStyle.prompt,
+                image_urls: [imageUrl], // Array of image URLs as per setup guide
+                num_images: 1, // Single image for testing to save credits
+                output_format: "png",
             },
-            webhookUrl,
+            webhookUrl: webhookUrl, // Use webhook for reliable results
         });
 
         console.log('Job submitted successfully with request_id:', request_id);
@@ -142,7 +143,8 @@ export async function POST(req: NextRequest) {
             status: "QUEUED", 
             requestId: request_id,
             transformationId: transformationRef.id,
-            userId
+            userId,
+            startTime: Date.now() // For processing time calculation
         });
 
         return NextResponse.json({ 
