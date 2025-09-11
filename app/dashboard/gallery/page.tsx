@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Navigation from '../../components/Navigation';
 import { Transformation } from '../../types';
 
 export default function GalleryPage() {
@@ -71,7 +72,7 @@ export default function GalleryPage() {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F3DFF] mx-auto"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF6B35] mx-auto"></div>
                     <p className="mt-4 text-gray-600">Loading...</p>
                 </div>
             </div>
@@ -83,7 +84,7 @@ export default function GalleryPage() {
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                     <h1 className="text-2xl font-semibold text-gray-800 mb-4">Please sign in</h1>
-                    <Link href="/signin" className="bg-[#0F3DFF] text-white px-6 py-2 rounded-lg font-medium hover:bg-[#0d2fd8]">
+                    <Link href="/signin" className="bg-[#FF6B35] text-white px-6 py-2 rounded-lg font-medium hover:bg-[#e55a2b]">
                         Sign In
                     </Link>
                 </div>
@@ -93,35 +94,7 @@ export default function GalleryPage() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Navigation Bar */}
-            <nav className="bg-white shadow-sm border-b border-gray-200">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center h-16">
-                        <div className="flex items-center space-x-4">
-                            <Link href="/dashboard" className="flex items-center space-x-2">
-                                <div className="w-8 h-8 bg-gradient-to-r from-[#0F3DFF] to-[#FF6B35] rounded-lg flex items-center justify-center">
-                                    <span className="text-white font-bold text-lg">S</span>
-                                </div>
-                                <span className="font-bold text-xl text-[#0F3DFF]">StyleForge AI</span>
-                            </Link>
-                            <span className="text-gray-300">|</span>
-                            <span className="text-gray-600">Gallery</span>
-                        </div>
-                        
-                        <div className="flex items-center space-x-4">
-                            <Link 
-                                href="/dashboard"
-                                className="text-gray-600 hover:text-gray-900"
-                            >
-                                Dashboard
-                            </Link>
-                            <span className="text-gray-700">
-                                {appUser?.credits || 0} credits
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </nav>
+            <Navigation />
 
             {/* Main Content */}
             <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -132,7 +105,7 @@ export default function GalleryPage() {
 
                 {loadingTransformations ? (
                     <div className="text-center py-12">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F3DFF] mx-auto"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF6B35] mx-auto"></div>
                         <p className="mt-4 text-gray-600">Loading your transformations...</p>
                     </div>
                 ) : transformations.length === 0 ? (
@@ -144,7 +117,7 @@ export default function GalleryPage() {
                         <p className="text-gray-600 mb-6">Start by uploading and transforming your first image</p>
                         <Link 
                             href="/dashboard"
-                            className="bg-[#0F3DFF] text-white px-6 py-2 rounded-lg font-medium hover:bg-[#0d2fd8]"
+                            className="bg-[#FF6B35] text-white px-6 py-2 rounded-lg font-medium hover:bg-[#e55a2b]"
                         >
                             Upload Images
                         </Link>
@@ -210,7 +183,7 @@ export default function GalleryPage() {
                                                                 </button>
                                                                 <button
                                                                     onClick={() => window.open(url, '_blank')}
-                                                                    className="bg-[#0F3DFF] text-white px-3 py-1 rounded text-sm font-medium hover:bg-[#0d2fd8]"
+                                                                    className="bg-[#FF6B35] text-white px-3 py-1 rounded text-sm font-medium hover:bg-[#e55a2b]"
                                                                 >
                                                                     View
                                                                 </button>
@@ -229,7 +202,7 @@ export default function GalleryPage() {
                                         </div>
                                     ) : (
                                         <div className="text-center py-8">
-                                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#0F3DFF] mx-auto"></div>
+                                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#FF6B35] mx-auto"></div>
                                             <p className="text-gray-600 mt-2">Processing...</p>
                                         </div>
                                     )}

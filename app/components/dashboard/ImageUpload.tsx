@@ -102,10 +102,10 @@ export default function ImageUpload({ onUpload, isProcessing, userCredits }: Ima
             <div
                 className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                     isDragOver 
-                        ? 'border-[#0F3DFF] bg-blue-50' 
+                        ? 'border-[#FF6B35] bg-orange-50' 
                         : selectedFile 
                         ? 'border-green-400 bg-green-50' 
-                        : 'border-gray-300 hover:border-[#0F3DFF]'
+                        : 'border-gray-300 hover:border-[#FF6B35]'
                 }`}
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
@@ -152,7 +152,7 @@ export default function ImageUpload({ onUpload, isProcessing, userCredits }: Ima
                         </p>
                         <button
                             onClick={() => fileInputRef.current?.click()}
-                            className="bg-[#0F3DFF] text-white px-6 py-2 rounded-lg font-medium hover:bg-[#0d2fd8] transition-colors"
+                            className="bg-[#FF6B35] text-white px-6 py-2 rounded-lg font-medium hover:bg-[#e55a2b] transition-colors"
                         >
                             Choose File
                         </button>
@@ -170,7 +170,7 @@ export default function ImageUpload({ onUpload, isProcessing, userCredits }: Ima
                                 key={key}
                                 className={`cursor-pointer p-4 border-2 rounded-lg transition-colors ${
                                     selectedStyle === key
-                                        ? 'border-[#0F3DFF] bg-blue-50'
+                                        ? 'border-[#FF6B35] bg-orange-50'
                                         : 'border-gray-200 hover:border-gray-300'
                                 }`}
                             >

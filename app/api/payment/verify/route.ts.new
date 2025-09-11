@@ -1,0 +1,95 @@
+import { NextResponse } from "next/server";
+import crypto from "crypto";
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { db } from '@/app/lib/firebase';
+
+export async function POST(req: Request): Promise<NextResponse> {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json();
+    
+    console.log("Verifying payment:", {
+      orderId: razorpay_order_id,
+      paymentId: razorpay_payment_id,
+      signature: razorpay_signature
+    });
+
+    // 1. Verify Payment Signature
+    const body = `${razorpay_order_id}|${razorpay_payment_id}`;
+    const expectedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET as string)
+      .update(body)
+      .digest("hex");
+
+    if (expectedSignature !== razorpay_signature) {
+      console.log("Payment verification failed - invalid signature");
+      return NextResponse.json({
+        message: "fail",
+        error: "Invalid signature"
+      }, { status: 400 });
+    }
+
+    try {
+      // 2. Get Order Details from Razorpay
+      const Razorpay = require('razorpay');
+      const instance = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+      });
+
+      const order = await instance.orders.fetch(razorpay_order_id);
+      const { email, credits } = order.notes;
+
+      console.log("Updating credits for user:", { email, credits, orderId: razorpay_order_id });
+
+      // 3. Update User Credits
+      const userRef = doc(db, 'users', email);
+      const userDoc = await getDoc(userRef);
+
+      if (!userDoc.exists()) {
+        throw new Error('User not found');
+      }
+
+      const currentCredits = userDoc.data().credits || 0;
+      const newCredits = currentCredits + parseInt(credits);
+
+      // 4. Save to Database
+      await updateDoc(userRef, {
+        credits: newCredits,
+        payments: [
+          ...(userDoc.data().payments || []),
+          {
+            orderId: razorpay_order_id,
+            paymentId: razorpay_payment_id,
+            credits: parseInt(credits),
+            amount: order.amount,
+            timestamp: new Date().toISOString(),
+            status: 'completed'
+          }
+        ],
+        updatedAt: new Date().toISOString()
+      });
+
+      // 5. Return Success Response
+      return NextResponse.json({
+        message: "success",
+        orderId: razorpay_order_id,
+        paymentId: razorpay_payment_id,
+        newCredits
+      });
+
+    } catch (error) {
+      console.error("Error processing payment:", error);
+      return NextResponse.json({
+        message: "error",
+        error: "Payment verified but failed to update credits: " + (error as Error).message
+      }, { status: 500 });
+    }
+
+  } catch (error) {
+    console.error("Error during payment verification:", error);
+    return NextResponse.json({
+      message: "error",
+      error: (error as Error).message
+    }, { status: 500 });
+  }
+}

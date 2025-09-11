@@ -6,6 +6,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ImageUpload from '../components/dashboard/ImageUpload';
 import TransformationResults from '../components/dashboard/TransformationResults';
+import CreditDisplay from '../components/dashboard/CreditDisplay';
+import QuickActions from '../components/dashboard/QuickActions';
+import Navigation from '../components/Navigation';
 import { TransformationStyleKey } from '../types';
 
 export default function DashboardPage() {
@@ -80,7 +83,7 @@ export default function DashboardPage() {
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                     <h1 className="text-2xl font-semibold text-gray-800 mb-4">Please sign in</h1>
-                    <Link href="/signin" className="bg-[#0F3DFF] text-white px-6 py-2 rounded-lg font-medium hover:bg-[#0d2fd8]">
+                    <Link href="/signin" className="bg-[#FF6B35] text-white px-6 py-2 rounded-lg font-medium hover:bg-[#e55a2b]">
                         Sign In
                     </Link>
                 </div>
@@ -90,37 +93,7 @@ export default function DashboardPage() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Navigation Bar */}
-            <nav className="bg-white shadow-sm border-b border-gray-200">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center h-16">
-                        <div className="flex items-center space-x-2">
-                            <div className="w-8 h-8 bg-gradient-to-r from-[#0F3DFF] to-[#FF6B35] rounded-lg flex items-center justify-center">
-                                <span className="text-white font-bold text-lg">S</span>
-                            </div>
-                            <span className="font-bold text-xl text-[#0F3DFF]">StyleForge AI</span>
-                        </div>
-                        
-                        <div className="flex items-center space-x-4">
-                            <Link 
-                                href="/dashboard/gallery"
-                                className="text-gray-600 hover:text-gray-900 font-medium"
-                            >
-                                Gallery
-                            </Link>
-                            <span className="text-gray-700">
-                                Welcome, {appUser?.name || appUser?.email || 'User'}!
-                            </span>
-                            <button 
-                                onClick={signOutAsync}
-                                className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-200"
-                            >
-                                Sign Out
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </nav>
+            <Navigation />
 
             {/* Main Content */}
             <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -129,21 +102,12 @@ export default function DashboardPage() {
                     <p className="text-gray-600">Transform your product photos with AI</p>
                 </div>
 
+                {/* Quick Actions */}
+                <QuickActions />
+
                 {/* User Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                        <div className="flex items-center">
-                            <div className="p-2 bg-[#0F3DFF] bg-opacity-10 rounded-lg">
-                                <svg className="w-6 h-6 text-[#0F3DFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                                </svg>
-                            </div>
-                            <div className="ml-4">
-                                <p className="text-sm font-medium text-gray-600">Available Credits</p>
-                                <p className="text-2xl font-bold text-gray-900">{appUser?.credits || 0}</p>
-                            </div>
-                        </div>
-                    </div>
+                    <CreditDisplay showBuyButton={false} />
 
                     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                         <div className="flex items-center">
@@ -187,23 +151,6 @@ export default function DashboardPage() {
                     onComplete={handleTransformationComplete}
                 />
 
-                {/* Buy Credits Section */}
-                {appUser?.credits === 0 && (
-                    <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200 mt-8">
-                        <h2 className="text-xl font-semibold text-gray-900 mb-4">Need More Credits?</h2>
-                        <p className="text-gray-600 mb-6">
-                            You've used all your free credits. Purchase more to continue transforming images.
-                        </p>
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#FF6B35] transition-colors cursor-pointer">
-                            <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                            </svg>
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">Buy Credits</h3>
-                            <p className="text-gray-600">Purchase more credits for transformations</p>
-                            <p className="text-sm text-gray-500 mt-2">Coming soon in Phase 3</p>
-                        </div>
-                    </div>
-                )}
 
                 {/* User Info (for testing) */}
                 <div className="mt-8 bg-white p-6 rounded-lg shadow-sm border border-gray-200">

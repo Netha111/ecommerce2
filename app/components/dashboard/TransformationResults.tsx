@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { JobStatus } from '@/app/types';
+import { saveTransformationResults, markTransformationFailed } from '@/app/lib/imageStorage';
 
 interface TransformationResultsProps {
     jobId: string | null;
@@ -33,8 +34,41 @@ export default function TransformationResults({ jobId, onComplete }: Transformat
                 if (response.ok) {
                     setJobStatus(data);
                     
-                    if (data.status === 'SUCCEEDED' || data.status === 'FAILED') {
-                        console.log('Job completed with status:', data.status);
+                    if (data.status === 'SUCCEEDED') {
+                        console.log('Job completed successfully:', data.status);
+                        
+                        // Save results to gallery if we have transformation ID
+                        if (data.transformationId && data.images && data.images.length > 0) {
+                            try {
+                                await saveTransformationResults(
+                                    data.transformationId,
+                                    data.images,
+                                    data.userId
+                                );
+                                console.log('✅ Results saved to gallery');
+                            } catch (error) {
+                                console.error('❌ Failed to save to gallery:', error);
+                            }
+                        }
+                        
+                        setLoading(false);
+                        if (onComplete) onComplete();
+                        return;
+                    } else if (data.status === 'FAILED') {
+                        console.log('Job failed:', data.status);
+                        
+                        // Mark transformation as failed
+                        if (data.transformationId) {
+                            try {
+                                await markTransformationFailed(
+                                    data.transformationId,
+                                    data.error || 'Transformation failed'
+                                );
+                            } catch (error) {
+                                console.error('❌ Failed to mark transformation as failed:', error);
+                            }
+                        }
+                        
                         setLoading(false);
                         if (onComplete) onComplete();
                         return;
@@ -107,7 +141,7 @@ export default function TransformationResults({ jobId, onComplete }: Transformat
 
             {loading && (
                 <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F3DFF] mx-auto mb-4"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF6B35] mx-auto mb-4"></div>
                     <p className="text-gray-600">
                         {jobStatus?.status === 'QUEUED' ? 'Queued for processing...' : 'Transforming your image...'}
                     </p>
@@ -156,7 +190,7 @@ export default function TransformationResults({ jobId, onComplete }: Transformat
                                     {imageLoadingStates[index] === true && (
                                         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
                                             <div className="text-center">
-                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F3DFF] mx-auto mb-2"></div>
+                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF6B35] mx-auto mb-2"></div>
                                                 <p className="text-sm text-gray-600">Loading image...</p>
                                             </div>
                                         </div>
@@ -233,7 +267,7 @@ export default function TransformationResults({ jobId, onComplete }: Transformat
                                         </button>
                                         <button
                                             onClick={() => window.open(image.url, '_blank')}
-                                            className="bg-[#0F3DFF] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#0d2fd8] transition-colors"
+                                            className="bg-[#FF6B35] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#e55a2b] transition-colors"
                                         >
                                             View Full
                                         </button>

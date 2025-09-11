@@ -48,6 +48,7 @@ type AuthContextValue = {
     appUser: AppUser | null;
     loading: boolean;
     signOutAsync: () => Promise<void>;
+    refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -124,11 +125,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => unsub();
     }, []);
 
+    const refreshUser = async () => {
+        if (!firebaseUser) return;
+        
+        try {
+            const ref = doc(db, 'users', firebaseUser.uid);
+            const snap = await getDoc(ref);
+            if (snap.exists()) {
+                const data = snap.data() as AppUser;
+                setAppUser(data);
+            }
+        } catch (error) {
+            console.error('Error refreshing user data:', error);
+        }
+    };
+
     const value = useMemo<AuthContextValue>(() => ({
         firebaseUser,
         appUser,
         loading,
         signOutAsync: () => signOut(auth),
+        refreshUser,
     }), [firebaseUser, appUser, loading]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

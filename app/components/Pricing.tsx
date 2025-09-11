@@ -13,7 +13,7 @@ export default function Pricing() {
         "Standard processing time"
       ],
       cta: "Start Free Trial",
-      ctaColor: "bg-[#0F3DFF] hover:bg-[#0d2fd8]",
+      ctaColor: "bg-[#FF6B35] hover:bg-[#e55a2b]",
       popular: false
     },
     {

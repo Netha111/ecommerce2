@@ -22,7 +22,7 @@ export default function HeroSection() {
 
                         {/* CTA Buttons */}
                         <div className="flex flex-col sm:flex-row gap-4">
-                            <a href="#pricing" className="bg-[#0F3DFF] text-white px-8 py-4 rounded-xl font-medium text-lg hover:bg-[#0d2fd8] transition-all duration-200 hover:shadow-lg hover:shadow-[#0F3DFF]/25 hover:scale-105">
+                            <a href="#pricing" className="bg-[#FF6B35] text-white px-8 py-4 rounded-xl font-medium text-lg hover:bg-[#e55a2b] transition-all duration-200 hover:shadow-lg hover:shadow-[#FF6B35]/25 hover:scale-105">
                                 Try Free Transformation
                             </a>
                             <a href="#examples" className="border-2 border-[#FF6B35] text-[#FF6B35] px-8 py-4 rounded-xl font-medium text-lg hover:bg-[#FF6B35] hover:text-white transition-all duration-200">
@@ -83,7 +83,7 @@ export default function HeroSection() {
                                 </div>
 
                                 {/* Divider */}
-                                <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-gradient-to-b from-[#0F3DFF] to-[#FF6B35]"></div>
+                                <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-gradient-to-b from-[#FF6B35] to-[#FF6B35]"></div>
                             </div>
 
                             <p className="text-center text-sm text-gray-600 mt-3">Optimized for apparel — clean backgrounds, sharp details, catalogue‑ready.</p>

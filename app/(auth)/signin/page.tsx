@@ -38,17 +38,73 @@ export default function SignInPage() {
     }
 
     return (
-        <main className="min-h-screen flex items-center justify-center px-4">
-            <div className="w-full max-w-md bg-white p-8 border border-gray-200 rounded-2xl shadow-sm">
-                <h1 className="text-2xl font-semibold text-gray-800 mb-6">Sign in</h1>
-                <form onSubmit={onSubmit} className="space-y-4">
-                    <input type="email" required placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                    <input type="password" required placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                    <button type="submit" disabled={loading} className="w-full bg-[#0F3DFF] text-white py-3 rounded-lg font-medium hover:bg-[#0d2fd8] disabled:opacity-60">{loading ? 'Signing in…' : 'Sign in'}</button>
-                    {error && <p className="text-sm text-red-600">{error}</p>}
-                </form>
-                <p className="text-sm text-gray-600 mt-4">No account? <Link href="/signup" className="text-[#0F3DFF]">Create one</Link></p>
+        <div className="min-h-screen bg-gray-50">
+            <div className="min-h-screen flex items-center justify-center px-4 py-12">
+                <div className="w-full max-w-md">
+                    {/* Logo */}
+                    <div className="text-center mb-8">
+                        <div className="inline-flex items-center space-x-2 mb-4">
+                            <div className="w-10 h-10 bg-gradient-to-r from-[#FF6B35] to-[#FF6B35] rounded-lg flex items-center justify-center">
+                                <span className="text-white font-bold text-xl">S</span>
+                            </div>
+                            <span className="font-bold text-2xl text-[#2D3748]">StyleForge AI</span>
+                        </div>
+                        <h1 className="text-3xl font-bold text-[#2D3748] mb-2">Welcome back</h1>
+                        <p className="text-gray-600">Sign in to your account to continue</p>
+                    </div>
+
+                    <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
+                        <form onSubmit={onSubmit} className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                <input 
+                                    type="email" 
+                                    required 
+                                    placeholder="Enter your email" 
+                                    value={email} 
+                                    onChange={(e) => setEmail(e.target.value)} 
+                                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent transition-colors" 
+                                />
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                                <input 
+                                    type="password" 
+                                    required 
+                                    placeholder="Enter your password" 
+                                    value={password} 
+                                    onChange={(e) => setPassword(e.target.value)} 
+                                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent transition-colors" 
+                                />
+                            </div>
+
+                            {error && (
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                                    <p className="text-sm text-red-600">{error}</p>
+                                </div>
+                            )}
+
+                            <button 
+                                type="submit" 
+                                disabled={loading} 
+                                className="w-full bg-[#FF6B35] text-white py-3 rounded-lg font-medium hover:bg-[#e55a2b] disabled:opacity-60 transition-colors"
+                            >
+                                {loading ? 'Signing in…' : 'Sign in'}
+                            </button>
+                        </form>
+                        
+                        <div className="mt-6 text-center">
+                            <p className="text-sm text-gray-600">
+                                Don't have an account?{' '}
+                                <Link href="/signup" className="text-[#FF6B35] hover:text-[#e55a2b] font-medium transition-colors">
+                                    Create one
+                                </Link>
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </main>
+        </div>
     );
 }
