@@ -9,14 +9,10 @@ const key_secret = process.env.RAZORPAY_KEY_SECRET;
 // Helper function to get user by email
 async function getUserByEmail(email: string) {
     try {
-        console.log('Looking up user by email:', email);
-        
         // Query users collection by email field
         const usersRef = collection(db, 'users');
         const q = query(usersRef, where('email', '==', email));
         const querySnapshot = await getDocs(q);
-        
-        console.log(`Found ${querySnapshot.size} users with email ${email}`);
         
         if (querySnapshot.empty) {
             // If no user found by email, try direct lookup (in case email is actually a UID)
@@ -24,26 +20,22 @@ async function getUserByEmail(email: string) {
             const directDoc = await getDoc(directRef);
             
             if (directDoc.exists()) {
-                console.log('Found user by direct ID lookup');
                 return {
                     id: directDoc.id,
                     ...directDoc.data()
                 };
             }
             
-            console.log('No user found with email or ID:', email);
             return null;
         }
         
         // Return the first matching user
         const userDoc = querySnapshot.docs[0];
-        console.log('Found user by email query:', userDoc.id);
         return {
             id: userDoc.id,
             ...userDoc.data()
         };
     } catch (error) {
-        console.error('Error getting user by email:', error);
         return null;
     }
 }
@@ -109,12 +101,6 @@ export async function POST(
             razorpay_signature,
             notes = {}
         } = body;
-        
-        console.log('Payment verification request:', { 
-            razorpay_order_id, 
-            razorpay_payment_id, 
-            notes 
-        });
 
         // Validate required fields
         if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -174,21 +160,13 @@ export async function POST(
                 message: 'Invalid credits amount'
             }, { status: 400 });
         }
-        
-        console.log('Credits to add:', credits, 'for user:', userEmail);
 
         // Get user by email
-        console.log('Searching for user with email:', userEmail);
-        
-        // First try to query by email field
         const usersRef = collection(db, 'users');
         const q = query(usersRef, where('email', '==', userEmail));
         const querySnapshot = await getDocs(q);
         
-        console.log(`Found ${querySnapshot.size} users with email ${userEmail}`);
-        
         if (querySnapshot.empty) {
-            console.error('No user found with email:', userEmail);
             return NextResponse.json({
                 success: false,
                 message: 'User not found'
@@ -198,7 +176,6 @@ export async function POST(
         // Get the first matching user document
         const userDoc = querySnapshot.docs[0];
         const userId = userDoc.id;
-        console.log('Found user with ID:', userId);
         
         // Get user document reference
         const userRef = doc(db, 'users', userId);
@@ -211,24 +188,19 @@ export async function POST(
             // First check if the user document exists before starting the transaction
             const userDocCheck = await getDoc(userRef);
             if (!userDocCheck.exists()) {
-                console.error('User document not found for ID:', userId);
                 return NextResponse.json({
                     success: false,
                     message: 'User document not found'
                 }, { status: 404 });
             }
             
-            console.log('Starting transaction for user:', userId);
-            
             paymentResult = await runTransaction(db, async (transaction) => {
                 const latestUserDoc = await transaction.get(userRef);
                 
                 if (!latestUserDoc.exists()) {
-                    console.error('User document not found in transaction for ID:', userId);
                     throw new Error('User document not found');
                 }
                 
-                console.log('User document found, updating credits');
                 const userData = latestUserDoc.data();
                 
                 // Check if payment was already processed
@@ -244,7 +216,6 @@ export async function POST(
                 // Calculate new credits
                 const currentCredits = userData.credits || 0;
                 newCredits = currentCredits + credits;
-                console.log(`Updating credits from ${currentCredits} to ${newCredits}`);
                 
                 // Create payment record
                 const paymentRecord = {
@@ -253,7 +224,7 @@ export async function POST(
                     credits: credits,
                     planName: notes.planName || 'Standard',
                     amount: notes.amount || 0,
-                    timestamp: new Date().toISOString(), // Use ISO string instead of serverTimestamp() for arrays
+                    timestamp: new Date().toISOString(),
                     status: 'completed'
                 };
                 
@@ -262,17 +233,14 @@ export async function POST(
                     credits: newCredits,
                     payments: [...payments, paymentRecord],
                     lastPayment: paymentRecord,
-                    updatedAt: serverTimestamp(), // Keep serverTimestamp() for direct fields
-                    lastUpdated: new Date().toISOString() // Add a regular date field as backup
+                    updatedAt: serverTimestamp(),
+                    lastUpdated: new Date().toISOString()
                 });
                 
                 return { newCredits, paymentRecord };
             });
             
-            console.log('Transaction completed successfully');
         } catch (transactionError) {
-            console.error('Transaction failed:', transactionError);
-            
             return NextResponse.json({
                 success: false,
                 message: `Transaction failed: ${(transactionError as Error).message}`
@@ -282,14 +250,12 @@ export async function POST(
         // Return success response
         return NextResponse.json({
             success: true,
-            message: 'success', // Match the message expected by frontend
+            message: 'success',
             credits: newCredits,
             planName: notes.planName || 'Standard'
         });
 
     } catch (error) {
-        // Log and handle any errors
-        console.error('Payment verification error:', error);
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         
         return NextResponse.json({

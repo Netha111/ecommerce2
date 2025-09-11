@@ -10,8 +10,8 @@ interface RazorpayIntegrationProps {
     credits: number;
     description?: string;
   };
-  onSuccess?: (data: any) => void;
-  onError?: (error: any) => void;
+  onSuccess?: (data: { success: boolean; message: string; credits: number; planName: string }) => void;
+  onError?: (error: { message: string }) => void;
 }
 
 export default function RazorpayIntegration({
@@ -76,7 +76,7 @@ export default function RazorpayIntegration({
         amount: parseInt(planDetails.amount) * 100, // Convert to paisa
         order_id: data.order.id,
         description: planDetails.description || `Purchase ${planDetails.credits} credits`,
-        handler: async function (response: any) {
+        handler: async function (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) {
           try {
             // Step 3: Verify payment with our backend
             const verifyResponse = await fetch('/api/payment/verify', {
@@ -118,7 +118,7 @@ export default function RazorpayIntegration({
       };
 
       // Open Razorpay checkout
-      const razorpay = new (window as any).Razorpay(options);
+      const razorpay = new (window as { Razorpay: new (options: any) => any }).Razorpay(options);
       razorpay.open();
     } catch (error) {
       console.error('Payment initialization error:', error);

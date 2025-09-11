@@ -50,9 +50,7 @@ export async function saveTransformationResults(
       }))
     });
 
-    console.log('✅ Transformation results saved to Firestore');
   } catch (error) {
-    console.error('❌ Error saving transformation results:', error);
     throw error;
   }
 }
@@ -74,9 +72,7 @@ export async function markTransformationFailed(
       updatedAt: serverTimestamp()
     });
 
-    console.log('❌ Transformation marked as failed');
   } catch (error) {
-    console.error('❌ Error marking transformation as failed:', error);
     throw error;
   }
 }
@@ -95,7 +91,6 @@ export async function getUserTransformations(userId: string, limit: number = 50)
     
     return data.transformations || [];
   } catch (error) {
-    console.error('Error fetching user transformations:', error);
     return [];
   }
 }
@@ -129,7 +124,6 @@ export async function downloadImage(url: string, filename: string): Promise<void
     setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
     
   } catch (error) {
-    console.error('Download failed, opening in new tab:', error);
     window.open(url, '_blank', 'noopener,noreferrer');
   }
 }

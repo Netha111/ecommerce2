@@ -15,7 +15,7 @@ export function useRazorpayScript() {
 
   useEffect(() => {
     // Check if Razorpay is already available
-    if (typeof window !== 'undefined' && (window as any).Razorpay) {
+    if (typeof window !== 'undefined' && (window as { Razorpay?: any }).Razorpay) {
       setIsLoaded(true);
       setHasError(false);
       return;
@@ -55,7 +55,7 @@ export function useRazorpayScript() {
 export default function RazorpayScript() {
   useEffect(() => {
     // Check if Razorpay is already available
-    if (typeof window !== 'undefined' && (window as any).Razorpay) {
+    if (typeof window !== 'undefined' && (window as { Razorpay?: any }).Razorpay) {
       scriptLoaded = true;
       scriptError = false;
       
@@ -71,7 +71,6 @@ export default function RazorpayScript() {
   }, []);
 
   const handleLoad = () => {
-    console.log('Razorpay script loaded successfully');
     scriptLoaded = true;
     scriptError = false;
     
@@ -79,8 +78,7 @@ export default function RazorpayScript() {
     loadCallbacks.forEach(callback => callback(true, false));
   };
 
-  const handleError = (error: any) => {
-    console.error('Razorpay script failed to load:', error);
+  const handleError = (error: unknown) => {
     scriptError = true;
     scriptLoaded = false;
     

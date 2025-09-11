@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import shortid from "shortid";
 
-const Razorpay = require('razorpay');
+import Razorpay from 'razorpay';
 
 // Create Razorpay instance
 const instance = new Razorpay({
@@ -15,7 +15,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     const body = await req.json();
     const { useremail, detail } = body;
 
-    console.log("Creating Razorpay order:", { useremail, detail });
 
     // Validate request data
     if (!useremail || !detail?.amount) {
@@ -66,10 +65,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       }
     };
 
-    console.log("Razorpay order options:", options);
-
     const order = await instance.orders.create(options);
-    console.log("Razorpay order created:", order);
 
     return NextResponse.json({
       msg: "success",

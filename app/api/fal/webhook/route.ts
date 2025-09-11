@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sync as ed25519 } from "@noble/ed25519";
+import { verify as ed25519Verify } from "@noble/ed25519";
 import { doc, updateDoc, serverTimestamp, getDoc } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
 import { deductCredits, updateTransformationStats } from "@/app/lib/credits";
@@ -45,7 +45,7 @@ async function verify(req: NextRequest, raw: Buffer) {
             const x = k?.x;
             if (!x) continue;
             const pub = Buffer.from(x.replace(/-/g, "+").replace(/_/g, "/"), "base64");
-            if (ed25519.verify(sigBytes, msg, pub)) return true;
+            if (ed25519Verify(sigBytes, msg, pub)) return true;
         } catch {}
     }
     return false;
@@ -65,17 +65,14 @@ export async function POST(req: NextRequest) {
         // Verify webhook signature
         const ok = await verify(req, raw);
         if (!ok) {
-            console.error('Webhook signature verification failed');
             return NextResponse.json({ error: "invalid signature" }, { status: 401 });
         }
 
         const body = JSON.parse(raw.toString("utf-8"));
-        console.log('Webhook received:', { jobId, status: body.status, requestId: body.request_id });
 
         // Get job data
         const jobData = jobs.get(jobId);
         if (!jobData) {
-            console.error('Job not found:', jobId);
             return NextResponse.json({ error: "Job not found" }, { status: 404 });
         }
 
@@ -138,7 +135,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true });
 
     } catch (error) {
-        console.error('Webhook error:', error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

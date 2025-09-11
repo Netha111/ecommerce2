@@ -39,7 +39,7 @@ export default function CreditDisplay({ showBuyButton = true, className = '' }: 
       {appUser?.credits === 0 && (
         <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
           <p className="text-sm text-yellow-800">
-            You're out of credits! Purchase more to continue transforming images.
+            You&apos;re out of credits! Purchase more to continue transforming images.
           </p>
         </div>
       )}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
@@ -73,8 +73,7 @@ export default function PricingPage() {
   const router = useRouter();
   const { firebaseUser, refreshUser, loading } = useAuth();
 
-  const handleSuccess = async (data: any) => {
-    console.log("Payment successful:", data);
+  const handleSuccess = async (data: { success: boolean; message: string; credits: number; planName: string }) => {
     toast.success(`Payment successful! Your account has been credited with ${data.credits} credits.`);
     
     // Refresh user data to update credits
@@ -86,8 +85,7 @@ export default function PricingPage() {
     }, 2000);
   };
 
-  const handleError = (error: any) => {
-    console.error("Payment error:", error);
+  const handleError = (error: { message: string }) => {
     toast.error(`Payment failed: ${error?.message || 'Unknown error'}`);
   };
 
