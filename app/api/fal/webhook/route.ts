@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
                 userId
             });
 
-            // Update transformation in Firestore
+            // Update transformation in Firestore with temporary URLs
             if (transformationId) {
                 const transformationRef = doc(db, 'transformations', transformationId);
                 await updateDoc(transformationRef, {
@@ -100,6 +100,8 @@ export async function POST(req: NextRequest) {
                     apiResponse: body.payload,
                     completedAt: serverTimestamp(),
                     processingTime: Date.now() - (jobData.startTime || Date.now()),
+                    // Mark as ready for permanent storage
+                    readyForPermanentStorage: true,
                 });
 
                 // Deduct credits and update user stats

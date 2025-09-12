@@ -8,9 +8,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export default function SignUpPage() {
-    const [name, setName] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const { firebaseUser, loading: authLoading } = useAuth();
@@ -23,13 +25,60 @@ export default function SignUpPage() {
         }
     }, [firebaseUser, authLoading, router]);
 
+    // Validation functions
+    const validateEmail = (email: string) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    };
+
+    const validatePassword = (password: string) => {
+        return password.length >= 6;
+    };
+
+    const validateName = (name: string) => {
+        return name.trim().length >= 2;
+    };
+
     async function onSubmit(e: FormEvent) {
         e.preventDefault();
         setError(null);
         setLoading(true);
+
+        // Validation
+        if (!validateName(firstName)) {
+            setError('First name must be at least 2 characters long');
+            setLoading(false);
+            return;
+        }
+
+        if (!validateName(lastName)) {
+            setError('Last name must be at least 2 characters long');
+            setLoading(false);
+            return;
+        }
+
+        if (!validateEmail(email)) {
+            setError('Please enter a valid email address');
+            setLoading(false);
+            return;
+        }
+
+        if (!validatePassword(password)) {
+            setError('Password must be at least 6 characters long');
+            setLoading(false);
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            setError('Passwords do not match');
+            setLoading(false);
+            return;
+        }
+
         try {
+            const fullName = `${firstName.trim()} ${lastName.trim()}`;
             const cred = await createUserWithEmailAndPassword(auth, email, password);
-            if (name) await updateProfile(cred.user, { displayName: name });
+            await updateProfile(cred.user, { displayName: fullName });
             // Redirect will happen automatically via useEffect
         } catch (err: unknown) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to sign up';
@@ -57,19 +106,33 @@ export default function SignUpPage() {
 
                     <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
                         <form onSubmit={onSubmit} className="space-y-6">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name (Optional)</label>
-                                <input 
-                                    type="text" 
-                                    placeholder="Enter your full name" 
-                                    value={name} 
-                                    onChange={(e) => setName(e.target.value)} 
-                                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent transition-colors" 
-                                />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
+                                    <input 
+                                        type="text" 
+                                        required
+                                        placeholder="First name" 
+                                        value={firstName} 
+                                        onChange={(e) => setFirstName(e.target.value)} 
+                                        className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent transition-colors" 
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
+                                    <input 
+                                        type="text" 
+                                        required
+                                        placeholder="Last name" 
+                                        value={lastName} 
+                                        onChange={(e) => setLastName(e.target.value)} 
+                                        className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent transition-colors" 
+                                    />
+                                </div>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
                                 <input 
                                     type="email" 
                                     required 
@@ -81,13 +144,25 @@ export default function SignUpPage() {
                             </div>
                             
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
                                 <input 
                                     type="password" 
                                     required 
-                                    placeholder="Create a password" 
+                                    placeholder="Create a password (min 6 characters)" 
                                     value={password} 
                                     onChange={(e) => setPassword(e.target.value)} 
+                                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent transition-colors" 
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password *</label>
+                                <input 
+                                    type="password" 
+                                    required 
+                                    placeholder="Confirm your password" 
+                                    value={confirmPassword} 
+                                    onChange={(e) => setConfirmPassword(e.target.value)} 
                                     className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent transition-colors" 
                                 />
                             </div>

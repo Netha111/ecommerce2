@@ -66,7 +66,12 @@ export default function AccountPage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                  <p className="text-gray-900">{appUser?.name || 'Not set'}</p>
+                  <p className="text-gray-900">
+                    {appUser?.firstName && appUser?.lastName 
+                      ? `${appUser.firstName} ${appUser.lastName}` 
+                      : appUser?.name || 'Not set'
+                    }
+                  </p>
                 </div>
                 
                 <div>
@@ -89,7 +94,11 @@ export default function AccountPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Member Since</label>
                   <p className="text-gray-900">
-                    {appUser?.createdAt ? new Date(appUser.createdAt as any).toLocaleDateString() : 'Unknown'}
+                    {appUser?.createdAt ? new Date(appUser.createdAt as any).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    }) : 'Unknown'}
                   </p>
                 </div>
               </div>

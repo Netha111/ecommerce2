@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { JobStatus } from '@/app/types';
-import { saveTransformationResults, markTransformationFailed } from '@/app/lib/imageStorage';
+import { markTransformationFailed } from '@/app/lib/imageStorage';
+import { persistTransformationToGallery } from '@/app/lib/imagePersistence';
+import { useAuth } from '@/app/context/AuthContext';
 
 interface TransformationResultsProps {
     jobId: string | null;
@@ -14,6 +16,19 @@ export default function TransformationResults({ jobId, onComplete }: Transformat
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [imageLoadingStates, setImageLoadingStates] = useState<{ [key: number]: boolean }>({});
+    const { refreshUser } = useAuth();
+
+    // Proper gallery persistence - download and store images permanently
+    const saveToGalleryPermanently = async (transformationId: string, images: any[], userId: string) => {
+        try {
+            console.log('🏛️ Persisting transformation to gallery permanently...');
+            await persistTransformationToGallery(transformationId, images, userId);
+            console.log('✅ Transformation persisted to gallery successfully');
+        } catch (error) {
+            console.error('❌ Failed to persist to gallery:', error);
+            throw error;
+        }
+    };
 
     useEffect(() => {
         if (!jobId) {
@@ -35,21 +50,25 @@ export default function TransformationResults({ jobId, onComplete }: Transformat
                     setJobStatus(data);
                     
                     if (data.status === 'SUCCEEDED') {
-                        console.log('Job completed successfully:', data.status);
+                        console.log('🎉 Job completed successfully:', data.status);
                         
-                        // Save results to gallery if we have transformation ID
+                        // Proper gallery persistence - download and store images permanently
                         if (data.transformationId && data.images && data.images.length > 0) {
                             try {
-                                await saveTransformationResults(
+                                await saveToGalleryPermanently(
                                     data.transformationId,
                                     data.images,
                                     data.userId
                                 );
-                                console.log('✅ Results saved to gallery');
                             } catch (error) {
-                                console.error('❌ Failed to save to gallery:', error);
+                                console.error('❌ Failed to persist to gallery:', error);
+                                // Don't fail the entire process if gallery save fails
+                                // The images are still displayed to the user
                             }
                         }
+                        
+                        // Refresh user data to update credits
+                        await refreshUser();
                         
                         setLoading(false);
                         if (onComplete) onComplete();
@@ -196,19 +215,19 @@ export default function TransformationResults({ jobId, onComplete }: Transformat
                                         </div>
                                     )}
                                     
-                                    {/* Primary image display via proxy */}
+                                    {/* Image display with multiple fallback strategies */}
                                     <img
                                         src={`/api/image-proxy?url=${encodeURIComponent(image.url)}`}
                                         alt={`Transformation ${index + 1}`}
                                         className="w-full h-auto object-contain transition-transform group-hover:scale-105"
                                         loading="eager"
                                         onLoadStart={() => {
-                                            console.log('Image load started via proxy:', image.url);
+                                            console.log('🖼️ Image load started via proxy:', image.url);
                                             setImageLoadingStates(prev => ({ ...prev, [index]: true }));
                                         }}
                                         onError={(e) => {
-                                            console.error('Proxied image failed to load:', image.url, e);
-                                            console.error('Trying direct URL as fallback...');
+                                            console.error('❌ Proxied image failed to load:', image.url);
+                                            console.log('🔄 Trying direct URL as fallback...');
                                             
                                             // Fallback to direct URL
                                             const img = e.currentTarget as HTMLImageElement;
@@ -217,11 +236,11 @@ export default function TransformationResults({ jobId, onComplete }: Transformat
                                             
                                             // If direct URL also fails, show error
                                             img.onerror = () => {
-                                                console.error('Direct URL also failed:', image.url);
+                                                console.error('❌ Direct URL also failed:', image.url);
                                                 setImageLoadingStates(prev => ({ ...prev, [index]: false }));
                                                 img.style.display = 'none';
                                                 
-                                                // Show error message
+                                                // Show error message with retry button
                                                 const errorDiv = document.createElement('div');
                                                 errorDiv.className = 'flex items-center justify-center h-full text-red-500 bg-red-50 rounded';
                                                 errorDiv.style.minHeight = '300px';
@@ -241,10 +260,9 @@ export default function TransformationResults({ jobId, onComplete }: Transformat
                                             };
                                         }}
                                         onLoad={(e) => {
-                                            console.log('Image loaded successfully via proxy:', image.url);
+                                            console.log('✅ Image loaded successfully via proxy:', image.url);
                                             const img = e.currentTarget as HTMLImageElement;
-                                            console.log('Image dimensions:', img.naturalWidth, 'x', img.naturalHeight);
-                                            console.log('Image complete:', img.complete);
+                                            console.log('📐 Image dimensions:', img.naturalWidth, 'x', img.naturalHeight);
                                             setImageLoadingStates(prev => ({ ...prev, [index]: false }));
                                         }}
                                         style={{ 

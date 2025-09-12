@@ -166,12 +166,24 @@ export default function GalleryPage() {
                                             {/* Transformed Images */}
                                             {transformation.transformedImageUrls.map((url, index) => (
                                                 <div key={index} className="space-y-2">
-                                                    <p className="text-sm font-medium text-gray-700">Variation {index + 1}</p>
+                                                    <p className="text-sm font-medium text-gray-700">
+                                                        Variation {index + 1}
+                                                        {transformation.permanentStorage && (
+                                                            <span className="ml-2 text-xs text-green-600">✓ Stored</span>
+                                                        )}
+                                                    </p>
                                                     <div className="group relative aspect-square bg-gray-100 rounded-lg overflow-hidden">
                                                         <img
                                                             src={url}
                                                             alt={`Transformation ${index + 1}`}
                                                             className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                                                            onError={(e) => {
+                                                                // Fallback to image proxy if direct URL fails
+                                                                const img = e.currentTarget as HTMLImageElement;
+                                                                if (!img.src.includes('/api/image-proxy')) {
+                                                                    img.src = `/api/image-proxy?url=${encodeURIComponent(url)}`;
+                                                                }
+                                                            }}
                                                         />
                                                         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center">
                                                             <div className="opacity-0 group-hover:opacity-100 transition-opacity space-x-2">

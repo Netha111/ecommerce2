@@ -10,6 +10,8 @@ export type AppUser = {
     uid: string;
     email: string | null;
     name: string | null;
+    firstName: string | null;
+    lastName: string | null;
     photoURL: string | null;
     
     // Credits & Plan
@@ -71,11 +73,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const ref = doc(db, 'users', user.uid);
             const snap = await getDoc(ref);
             if (!snap.exists()) {
+                // Parse displayName to extract firstName and lastName
+                const displayName = user.displayName ?? '';
+                const nameParts = displayName.split(' ');
+                const firstName = nameParts[0] ?? null;
+                const lastName = nameParts.slice(1).join(' ') || null;
+
                 const newUser: AppUser = {
                     // Basic Info
                     uid: user.uid,
                     email: user.email,
                     name: user.displayName ?? null,
+                    firstName: firstName,
+                    lastName: lastName,
                     photoURL: user.photoURL ?? null,
                     
                     // Credits & Plan
@@ -115,6 +125,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (data.emailNotifications === undefined) updates.emailNotifications = true;
                 if (data.planAutoRenew === undefined) updates.planAutoRenew = true;
                 if (!data.updatedAt) updates.updatedAt = serverTimestamp();
+                
+                // Backfill firstName and lastName for existing users
+                if (!data.firstName && !data.lastName && data.name) {
+                    const nameParts = data.name.split(' ');
+                    updates.firstName = nameParts[0] ?? null;
+                    updates.lastName = nameParts.slice(1).join(' ') || null;
+                } else if (!data.firstName && !data.lastName && user.displayName) {
+                    const nameParts = user.displayName.split(' ');
+                    updates.firstName = nameParts[0] ?? null;
+                    updates.lastName = nameParts.slice(1).join(' ') || null;
+                }
+                
                 updates.lastLoginAt = serverTimestamp();
                 
                 if (Object.keys(updates).length > 0) await updateDoc(ref, updates);

@@ -31,26 +31,99 @@ export async function saveTransformationResults(
   userId: string
 ): Promise<void> {
   try {
+    console.log('💾 Saving transformation results:', { transformationId, imageCount: images.length, userId });
+    
     const transformationRef = doc(db, 'transformations', transformationId);
     
-    const imageUrls = images.map(img => img.url);
+    // Check if document exists first
+    const { getDoc } = await import('firebase/firestore');
+    const docSnap = await getDoc(transformationRef);
     
-    await updateDoc(transformationRef, {
+    if (!docSnap.exists()) {
+      console.error('❌ Transformation document does not exist:', transformationId);
+      // Try to create it as a fallback
+      await createTransformationDocument(transformationId, images, userId);
+      return;
+    }
+    
+    const imageUrls = images.map(img => img.url).filter(url => url); // Filter out undefined URLs
+    
+    // Create comprehensive update object
+    const updateData: any = {
       status: 'completed',
-      transformedImageUrls: imageUrls,
       completedAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-      // Store additional image metadata
-      imageMetadata: images.map(img => ({
+      savedToGallery: true,
+      savedToGalleryAt: serverTimestamp(),
+    };
+    
+    // Only add transformedImageUrls if we have valid URLs
+    if (imageUrls.length > 0) {
+      updateData.transformedImageUrls = imageUrls;
+    }
+    
+    // Only add imageMetadata if we have valid images with metadata
+    const validMetadata = images
+      .filter(img => img.url) // Only include images with valid URLs
+      .map(img => ({
         url: img.url,
-        width: img.width,
-        height: img.height,
-        size: img.size,
-        format: img.format
-      }))
-    });
+        ...(img.width && { width: img.width }),
+        ...(img.height && { height: img.height }),
+        ...(img.size && { size: img.size }),
+        ...(img.format && { format: img.format })
+      }));
+    
+    if (validMetadata.length > 0) {
+      updateData.imageMetadata = validMetadata;
+    }
+    
+    await updateDoc(transformationRef, updateData);
+    console.log('✅ Transformation results saved successfully');
 
   } catch (error) {
+    console.error('❌ Error saving transformation results:', error);
+    throw error;
+  }
+}
+
+// Fallback function to create transformation document if it doesn't exist
+async function createTransformationDocument(
+  transformationId: string,
+  images: ImageData[],
+  userId: string
+): Promise<void> {
+  try {
+    console.log('🔄 Creating missing transformation document:', transformationId);
+    
+    const { setDoc } = await import('firebase/firestore');
+    const transformationRef = doc(db, 'transformations', transformationId);
+    
+    const imageUrls = images.map(img => img.url).filter(url => url);
+    
+    const newTransformationData = {
+      userId,
+      status: 'completed',
+      transformedImageUrls: imageUrls,
+      imageMetadata: images
+        .filter(img => img.url)
+        .map(img => ({
+          url: img.url,
+          ...(img.width && { width: img.width }),
+          ...(img.height && { height: img.height }),
+          ...(img.size && { size: img.size }),
+          ...(img.format && { format: img.format })
+        })),
+      createdAt: serverTimestamp(),
+      completedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      createdAsFallback: true,
+    };
+
+    await setDoc(transformationRef, newTransformationData);
+    console.log('✅ Fallback transformation document created');
+    
+  } catch (error) {
+    console.error('❌ Error creating fallback transformation document:', error);
     throw error;
   }
 }
@@ -65,14 +138,24 @@ export async function markTransformationFailed(
   try {
     const transformationRef = doc(db, 'transformations', transformationId);
     
+    // Check if document exists first
+    const { getDoc } = await import('firebase/firestore');
+    const docSnap = await getDoc(transformationRef);
+    
+    if (!docSnap.exists()) {
+      console.error('Transformation document does not exist:', transformationId);
+      return;
+    }
+    
     await updateDoc(transformationRef, {
       status: 'failed',
-      errorMessage,
+      errorMessage: errorMessage || 'Unknown error occurred',
       failedAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
 
   } catch (error) {
+    console.error('Error marking transformation as failed:', error);
     throw error;
   }
 }

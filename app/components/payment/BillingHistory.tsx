@@ -20,36 +20,39 @@ export default function BillingHistory() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Mock data for now - in a real app, this would fetch from your API
-    const mockPayments: PaymentRecord[] = [
-      {
-        id: '1',
-        amount: 1999,
-        credits: 500,
-        plan: 'Professional',
-        status: 'completed',
-        createdAt: new Date().toISOString(),
-        paymentMethod: 'Razorpay',
-        transactionId: 'txn_123456789'
-      },
-      {
-        id: '2',
-        amount: 1,
-        credits: 50,
-        plan: 'Starter',
-        status: 'completed',
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-        paymentMethod: 'Razorpay',
-        transactionId: 'txn_987654321'
+    const fetchPayments = async () => {
+      if (!appUser) {
+        setLoading(false);
+        return;
       }
-    ];
 
-    // Simulate API call
-    setTimeout(() => {
-      setPayments(mockPayments);
-      setLoading(false);
-    }, 1000);
-  }, []);
+      try {
+        // Get payments from user's document
+        const userPayments = appUser.payments || [];
+        
+        // Convert to PaymentRecord format
+        const formattedPayments: PaymentRecord[] = userPayments.map((payment: any, index: number) => ({
+          id: payment.paymentId || `payment_${index}`,
+          amount: payment.amount || 0,
+          credits: payment.credits || 0,
+          plan: payment.planName || 'Unknown',
+          status: payment.status || 'completed',
+          createdAt: payment.timestamp || new Date().toISOString(),
+          paymentMethod: 'Razorpay',
+          transactionId: payment.paymentId || 'N/A'
+        }));
+
+        setPayments(formattedPayments);
+      } catch (error) {
+        console.error('Error fetching payments:', error);
+        setPayments([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPayments();
+  }, [appUser]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {

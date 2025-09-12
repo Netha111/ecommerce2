@@ -48,7 +48,10 @@ export default function Navigation() {
                 </Link>
                 <div className="flex items-center space-x-4">
                   <span className="text-sm text-gray-600">
-                    Credits: <span className="font-semibold text-[#0F3DFF]">{appUser?.credits || 0}</span>
+                    Welcome, <span className="font-semibold text-[#FF6B35]">{appUser?.firstName || appUser?.name || 'User'}</span>
+                  </span>
+                  <span className="text-sm text-gray-600">
+                    Credits: <span className="font-semibold text-[#FF6B35]">{appUser?.credits || 0}</span>
                   </span>
                   <button
                     onClick={handleSignOut}
